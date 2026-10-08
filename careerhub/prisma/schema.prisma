@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int           @id @default(autoincrement())
+  name         String
+  email        String        @unique
+  passwordHash String
+  role         String        @default("JOB_SEEKER")
+  profile      Profile?
+  applications Application[]
+  jobs         Job[]
+  savedJobs    SavedJob[]
+  createdAt    DateTime      @default(now())
+}
+
+model Profile {
+  id          Int     @id @default(autoincrement())
+  userId      Int     @unique
+  phone       String?
+  location    String?
+  bio         String?
+  skills      String?
+  resumeUrl   String?
+  experience  String?
+  education   String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Job {
+  id           Int           @id @default(autoincrement())
+  title        String
+  company      String
+  location     String
+  type         String
+  salary       String?
+  description  String
+  requirements String?
+  createdAt    DateTime      @default(now())
+
+  employerId   Int
+  employer     User          @relation(fields: [employerId], references: [id])
+  applications Application[]
+  savedJobs    SavedJob[]
+}
+
+model Application {
+  id          Int      @id @default(autoincrement())
+  jobId       Int
+  applicantId Int
+  status      String   @default("APPLIED")
+  coverLetter String?
+  appliedAt   DateTime @default(now())
+
+  job       Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  applicant User @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, applicantId])
+}
+
+model SavedJob {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  jobId     Int
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job  Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, jobId])
+}
